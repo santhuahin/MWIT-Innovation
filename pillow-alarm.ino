@@ -20,7 +20,9 @@ ESP32Time rtc(25200); //UTC+7
 
 void setup() {
   Serial.begin(115200);
+  EEPROM.begin(EEPROM_SIZE);
   rtc.setTime(1609459200);
+  SerialBT.setTimeout(5000);
   SerialBT.begin("ESP32alarm"); //Bluetooth device name
   Serial.println("The device started, now you can pair it with bluetooth!");
 }
@@ -30,36 +32,48 @@ void loop() {
   parseNumber();
   if (dataNumber == 100){
     setTime();
-    break;
+    
   }
   else if (dataNumber == 200){
     stopAlarm();
-    break;
+    
   }
   else if (dataNumber == 300){
     snoozeAlarm();
-    break;
+    
   }
   else if (dataNumber == 400){
     SerialBT.println(rtc.getDateTime());
-    break;
+    
   }
   else if (dataNumber == 500){
     setAlarm();
-    break;
+    
+  }
+  else if (dataNumber == 600){
+    viewAlarms();
+    
   }
   else{
     SerialBT.println("Error");
-    break;
+    
+  }
+  if ((rtc.getHour() == EEPROM.read(1)) && (rtc.getMinute() == EEPROM.read(2))){
+    startVibration();
+    
   }
 
 
-}
+} 
 
 void recvWithEndMarker() {
     static byte ndx = 0;
     char endMarker = '\n';
     char rc;
+
+    while (Serial.available() > 0) {
+    Serial.read();
+}
     
     if (SerialBT.available() > 0) {
         rc = SerialBT.read();
@@ -88,15 +102,15 @@ void parseNumber() {
 }
 
 void setTime() {
-  SerialBT.println("Input current Day (2 digit)");
+  SerialBT.println("Input current Day");
   int day = SerialBT.parseInt();
-  SerialBT.println("Input current Month (2 digit)");
+  SerialBT.println("Input current Month");
   int month = SerialBT.parseInt();
-  SerialBT.println("Input current Year (4 digit)");
+  SerialBT.println("Input current Year");
   int year = SerialBT.parseInt();
   SerialBT.println("Input current Hour (24h format)");
   int setHour = SerialBT.parseInt();
-  SerialBT.println("Input current Minute (2 digit)");
+  SerialBT.println("Input current Minute");
   int setMin = SerialBT.parseInt();
   rtc.setTime(0, setMin, setHour, day, month, year);
 
@@ -112,12 +126,24 @@ void snoozeAlarm(){
 
 void setAlarm(){
   SerialBT.println("Input Hour (24h format)");
-  int hour = SerialBT.parseInt();
+  int hour = SerialBT.parseInt(); 
   EEPROM.write(1, hour);
-  SerialBT.println("Input Minute (2 digit)");
+  SerialBT.println("Input Minute ");
   int min = SerialBT.parseInt();
   EEPROM.write(2, min);
   SerialBT.println("Repeat Daily 1. Yes 2. NO");
   int repeat = SerialBT.parseInt();
   EEPROM.write(3, repeat);
+}
+
+void startVibration(){
+
+}
+
+void stopVibration(){
+
+}
+
+void viewAlarms(){
+
 }
