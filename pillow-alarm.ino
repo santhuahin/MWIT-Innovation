@@ -1,4 +1,8 @@
 #include "BluetoothSerial.h"
+#include <ESP32Time.h>
+#include <EEPROM.h>
+
+#define EEPROM_SIZE 255
 
 #if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
 #error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
@@ -7,57 +11,113 @@
 BluetoothSerial SerialBT;
 
 char current_time;
+const byte numChars = 32;
+char receivedChars[numChars];
+boolean newData = false;
+int dataNumber = 0;  
+
+ESP32Time rtc(25200); //UTC+7
 
 void setup() {
   Serial.begin(115200);
+  rtc.setTime(1609459200);
   SerialBT.begin("ESP32alarm"); //Bluetooth device name
   Serial.println("The device started, now you can pair it with bluetooth!");
 }
 
 void loop() {
-   if (Serial.available()) {
-    SerialBT.write(Serial.read());
-    Serial.println("Choose Function: \n 1. Set Time \n 2. Stop alarm \n 3. Snooze alarm");
-    int user_select = Serial.parseInt();
-    Serial.print("Curent time is");
-    Serial.println(current_time);
-    if (user_select == 1) {
-      set_time();
-    }
-    else if (user_select == 2) {
-      stop_alarm();
-    }
-    else if (user_select == 3) {
-      snooze_alarm();
-    }
+  recvWithEndMarker();
+  parseNumber();
+  if (dataNumber == 100){
+    setTime();
+    break;
   }
-  if (SerialBT.available()) {
-    Serial.write(SerialBT.read());
-    SerialBT.println("Choose Function: \n 1. Set Time \n 2. Stop alarm \n 3. Snooze alarm");
-    int user_select = SerialBT.parseInt();
-    SerialBT.print("Curent time is");
-    SerialBT.println(current_time);
-    if (user_select == 1) {
-      set_time();
-    }
-    else if (user_select == 2) {
-      stop_alarm();
-    }
-    else if (user_select == 3) {
-      snooze_alarm();
-    }
+  else if (dataNumber == 200){
+    stopAlarm();
+    break;
   }
-  delay(20);
+  else if (dataNumber == 300){
+    snoozeAlarm();
+    break;
+  }
+  else if (dataNumber == 400){
+    SerialBT.println(rtc.getDateTime());
+    break;
+  }
+  else if (dataNumber == 500){
+    setAlarm();
+    break;
+  }
+  else{
+    SerialBT.println("Error");
+    break;
+  }
+
+
 }
 
-void set_time() {
+void recvWithEndMarker() {
+    static byte ndx = 0;
+    char endMarker = '\n';
+    char rc;
+    
+    if (SerialBT.available() > 0) {
+        rc = SerialBT.read();
+
+        if (rc != endMarker) {
+            receivedChars[ndx] = rc;
+            ndx++;
+            if (ndx >= numChars) {
+                ndx = numChars - 1;
+            }
+        }
+        else {
+            receivedChars[ndx] = '\0'; // terminate the string
+            ndx = 0;
+            newData = true;
+        }
+    }
+}
+
+void parseNumber() {
+    if (newData == true) {
+        dataNumber = 0;             // new for this version
+        dataNumber = atoi(receivedChars);   // new for this version
+        newData = false;
+    }
+}
+
+void setTime() {
+  SerialBT.println("Input current Day (2 digit)");
+  int day = SerialBT.parseInt();
+  SerialBT.println("Input current Month (2 digit)");
+  int month = SerialBT.parseInt();
+  SerialBT.println("Input current Year (4 digit)");
+  int year = SerialBT.parseInt();
+  SerialBT.println("Input current Hour (24h format)");
+  int setHour = SerialBT.parseInt();
+  SerialBT.println("Input current Minute (2 digit)");
+  int setMin = SerialBT.parseInt();
+  rtc.setTime(0, setMin, setHour, day, month, year);
 
 }
 
-void stop_alarm() {
+void stopAlarm() {
 
 }
 
-void snooze_alarm(){
+void snoozeAlarm(){
 
+}
+
+void setAlarm(){
+  SerialBT.println("Input Hour (24h format)");
+  int hour = SerialBT.parseInt();
+  EEPROM.write(1, hour);
+  SerialBT.println("Input Minute (2 digit)");
+  int min = SerialBT.parseInt();
+  EEPROM.write(2, min);
+  SerialBT.println("Repeat Daily 1. Yes 2. NO");
+  int repeat = SerialBT.parseInt();
+  EEPROM.write(3, repeat);
 }
