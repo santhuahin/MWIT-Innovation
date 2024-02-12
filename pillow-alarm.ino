@@ -10,18 +10,28 @@
 
 BluetoothSerial SerialBT;
 
-char current_time;
+int motor1;
+int motor2;
+
 const byte numChars = 32;
 char receivedChars[numChars];
 boolean newData = false;
 int dataNumber = 0;  
+long timeSinceSnooze;
+boolean snooze = false;
 
 ESP32Time rtc(25200); //UTC+7
 
 void setup() {
   Serial.begin(115200);
+
   EEPROM.begin(EEPROM_SIZE);
+
   rtc.setTime(1609459200);
+
+  pinMode(motor1, OUTPUT);
+  pinMode(motor2, OUTPUT);
+
   SerialBT.setTimeout(5000);
   SerialBT.begin("ESP32alarm"); //Bluetooth device name
   Serial.println("The device started, now you can pair it with bluetooth!");
@@ -51,7 +61,11 @@ void loop() {
     
   }
   else if (dataNumber == 600){
-    viewAlarms();
+    viewAlarm();
+    
+  }
+  else if (dataNumber == 700){
+    clearAlarm();
     
   }
   else{
@@ -60,8 +74,12 @@ void loop() {
   }
   if ((rtc.getHour() == EEPROM.read(1)) && (rtc.getMinute() == EEPROM.read(2))){
     startVibration();
-    
+  
   }
+  if ((snooze == true) && (timeSinceSnooze == (EEPROM.read(3))*60000)){
+    startVibration();
+  }
+
 
 
 } 
@@ -117,11 +135,15 @@ void setTime() {
 }
 
 void stopAlarm() {
-
+  stopVibration();
+  timeSinceSnooze = 0;
+  snooze = false;
 }
 
 void snoozeAlarm(){
-
+  stopVibration();
+  timeSinceSnooze = millis();
+  snooze = true;
 }
 
 void setAlarm(){
@@ -131,19 +153,33 @@ void setAlarm(){
   SerialBT.println("Input Minute ");
   int min = SerialBT.parseInt();
   EEPROM.write(2, min);
-  SerialBT.println("Repeat Daily 1. Yes 2. NO");
-  int repeat = SerialBT.parseInt();
-  EEPROM.write(3, repeat);
+  SerialBT.println("Input Snooze duration (0 for no snooze) ");
+  int snoozeDuration = SerialBT.parseInt();
+  EEPROM.write(3, snoozeDuration);
 }
 
 void startVibration(){
-
+  digitalWrite(motor1, HIGH);
+  digitalWrite(motor2, HIGH);
+  timeSinceSnooze = 0;
 }
 
 void stopVibration(){
+  digitalWrite(motor1, LOW);
+  digitalWrite(motor2, LOW);
+  timeSinceSnooze = 0;
+}
+
+void viewAlarm(){
+  SerialBT.println("Alarm set");
+  SerialBT.print(EEPROM.read(1));
+  SerialBT.print(":");
+  SerialBT.print(EEPROM.read(2));
 
 }
 
-void viewAlarms(){
-
+void clearAlarm(){
+  EEPROM.write(1, 0);
+  EEPROM.write(2, 0);
+  SerialBT.println("Alarm Cleared");
 }
