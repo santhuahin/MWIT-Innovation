@@ -171,15 +171,19 @@ void stopVibration(){
 }
 
 void viewAlarm(){
-  SerialBT.println("Alarm set");
+  SerialBT.print("Alarm set");
   SerialBT.print(EEPROM.read(1));
   SerialBT.print(":");
-  SerialBT.print(EEPROM.read(2));
+  SerialBT.println(EEPROM.read(2));
+  SerialBT.print("Snooze interval");
+  SerialBT.print(EEPROM.read(3));
+  SerialBT.println("min");
 
 }
 
 void clearAlarm(){
   EEPROM.write(1, 0);
   EEPROM.write(2, 0);
+  EEPROM.write(3, 0);
   SerialBT.println("Alarm Cleared");
 }
