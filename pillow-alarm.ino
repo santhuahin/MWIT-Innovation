@@ -68,6 +68,18 @@ void loop() {
     clearAlarm();
     
   }
+  else if (dataNumber == 999){
+    for (int i = 0; i<3; i++){
+      digitalWrite(motor1,HIGH);
+      delay(3000);
+      digitalWrite(motor1,LOW);
+      delay(3000);
+      digitalWrite(motor2,HIGH);
+      delay(3000);
+      digitalWrite(motor2,LOW);
+      delay(3000);
+    }
+  }
   else{
     SerialBT.println("Error");
     
