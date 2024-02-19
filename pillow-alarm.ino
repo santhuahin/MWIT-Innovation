@@ -10,8 +10,8 @@
 
 BluetoothSerial SerialBT;
 
-int motor1;
-int motor2;
+int motor1 = 22;
+int motor2 = 23;
 
 const byte numChars = 32;
 char receivedChars[numChars];
@@ -42,33 +42,33 @@ void loop() {
   parseNumber();
   if (dataNumber == 100){
     setTime();
-    
+    return;
   }
-  else if (dataNumber == 200){
+  if (dataNumber == 200){
     stopAlarm();
-    
+    return;
   }
-  else if (dataNumber == 300){
+  if (dataNumber == 300){
     snoozeAlarm();
-    
+    return
   }
-  else if (dataNumber == 400){
+  if (dataNumber == 400){
     SerialBT.println(rtc.getDateTime());
-    
+    return;
   }
-  else if (dataNumber == 500){
+  if (dataNumber == 500){
     setAlarm();
-    
+    return;
   }
-  else if (dataNumber == 600){
+  if (dataNumber == 600){
     viewAlarm();
-    
+    return;
   }
-  else if (dataNumber == 700){
+  if (dataNumber == 700){
     clearAlarm();
-    
+    return;
   }
-  else if (dataNumber == 999){
+  if (dataNumber == 999){
     for (int i = 0; i<3; i++){
       digitalWrite(motor1,HIGH);
       delay(3000);
@@ -79,10 +79,6 @@ void loop() {
       digitalWrite(motor2,LOW);
       delay(3000);
     }
-  }
-  else{
-    SerialBT.println("Error");
-    
   }
   if ((rtc.getHour() == EEPROM.read(1)) && (rtc.getMinute() == EEPROM.read(2))){
     startVibration();
