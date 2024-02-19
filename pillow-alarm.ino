@@ -40,33 +40,34 @@ void setup() {
 void loop() {
   recvWithEndMarker();
   parseNumber();
-  if (dataNumber == 100){
+  while (SerialBT.available > 0){
+  else if (dataNumber == 100){
     setTime();
-    return;
+    break;
   }
-  if (dataNumber == 200){
+  else if (dataNumber == 200){
     stopAlarm();
-    return;
+    break;
   }
-  if (dataNumber == 300){
+  else if (dataNumber == 300){
     snoozeAlarm();
-    return;
+    break;
   }
-  if (dataNumber == 400){
+  else if (dataNumber == 400){
     SerialBT.println(rtc.getDateTime());
-    return;
+    break;
   }
-  if (dataNumber == 500){
+  else if (dataNumber == 500){
     setAlarm();
-    return;
+    break;
   }
-  if (dataNumber == 600){
+  else if (dataNumber == 600){
     viewAlarm();
-    return;
+    break;
   }
-  if (dataNumber == 700){
+  else if (dataNumber == 700){
     clearAlarm();
-    return;
+    break;
   }
   if (dataNumber == 999){
     for (int i = 0; i<3; i++){
@@ -79,6 +80,7 @@ void loop() {
       digitalWrite(motor2,LOW);
       delay(3000);
     }
+  }
   }
   if ((rtc.getHour() == EEPROM.read(1)) && (rtc.getMinute() == EEPROM.read(2))){
     startVibration();
@@ -97,8 +99,8 @@ void recvWithEndMarker() {
     char endMarker = '\n';
     char rc;
 
-    while (Serial.available() > 0) {
-    Serial.read();
+    while (SerialBT.available() > 0) {
+    SerialBT.read();
 }
     
     if (SerialBT.available() > 0) {
