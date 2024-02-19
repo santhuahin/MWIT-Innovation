@@ -40,34 +40,33 @@ void setup() {
 void loop() {
   recvWithEndMarker();
   parseNumber();
-  while (SerialBT.available > 0){
-  else if (dataNumber == 100){
+  if (dataNumber == 100){
     setTime();
-    break;
+    ESP.restart();
   }
-  else if (dataNumber == 200){
+  if (dataNumber == 200){
     stopAlarm();
-    break;
+    ESP.restart();
   }
-  else if (dataNumber == 300){
+  if (dataNumber == 300){
     snoozeAlarm();
-    break;
+    ESP.restart();
   }
-  else if (dataNumber == 400){
+  if (dataNumber == 400){
     SerialBT.println(rtc.getDateTime());
-    break;
+    ESP.restart();
   }
-  else if (dataNumber == 500){
+  if (dataNumber == 500){
     setAlarm();
-    break;
+    ESP.restart();
   }
-  else if (dataNumber == 600){
+  if (dataNumber == 600){
     viewAlarm();
-    break;
+    ESP.restart();
   }
-  else if (dataNumber == 700){
+  if (dataNumber == 700){
     clearAlarm();
-    break;
+    ESP.restart();
   }
   if (dataNumber == 999){
     for (int i = 0; i<3; i++){
@@ -80,7 +79,7 @@ void loop() {
       digitalWrite(motor2,LOW);
       delay(3000);
     }
-  }
+  
   }
   if ((rtc.getHour() == EEPROM.read(1)) && (rtc.getMinute() == EEPROM.read(2))){
     startVibration();
@@ -99,8 +98,8 @@ void recvWithEndMarker() {
     char endMarker = '\n';
     char rc;
 
-    while (SerialBT.available() > 0) {
-    SerialBT.read();
+    while (Serial.available() > 0) {
+    Serial.read();
 }
     
     if (SerialBT.available() > 0) {
@@ -141,7 +140,6 @@ void setTime() {
   SerialBT.println("Input current Minute");
   int setMin = SerialBT.parseInt();
   rtc.setTime(0, setMin, setHour, day, month, year);
-  serialFlush();
 
 }
 
@@ -149,14 +147,12 @@ void stopAlarm() {
   stopVibration();
   timeSinceSnooze = 0;
   snooze = false;
-  serialFlush();
 }
 
 void snoozeAlarm(){
   stopVibration();
   timeSinceSnooze = millis();
   snooze = true;
-  serialFlush();
 }
 
 void setAlarm(){
@@ -169,21 +165,18 @@ void setAlarm(){
   SerialBT.println("Input Snooze duration (0 for no snooze) ");
   int snoozeDuration = SerialBT.parseInt();
   EEPROM.write(3, snoozeDuration);
-  serialFlush();
 }
 
 void startVibration(){
   digitalWrite(motor1, HIGH);
   digitalWrite(motor2, HIGH);
   timeSinceSnooze = 0;
-  serialFlush();
 }
 
 void stopVibration(){
   digitalWrite(motor1, LOW);
   digitalWrite(motor2, LOW);
   timeSinceSnooze = 0;
-  serialFlush();
 }
 
 void viewAlarm(){
@@ -194,8 +187,6 @@ void viewAlarm(){
   SerialBT.print("Snooze interval");
   SerialBT.print(EEPROM.read(3));
   SerialBT.println("min");
-  serialFlush();
-
 }
 
 void clearAlarm(){
@@ -203,11 +194,4 @@ void clearAlarm(){
   EEPROM.write(2, 0);
   EEPROM.write(3, 0);
   SerialBT.println("Alarm Cleared");
-  serialFlush();
-}
-
-void serialFlush(){
-  while(SerialBT.available() > 0) {
-    char t = SerialBT.read();
-  }
 }
