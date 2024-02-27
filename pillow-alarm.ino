@@ -10,8 +10,8 @@
 
 BluetoothSerial SerialBT;
 
-int motor1;
-int motor2;
+int motor1 = 22;
+int motor2 = 23;
 
 const byte numChars = 32;
 char receivedChars[numChars];
@@ -44,33 +44,42 @@ void loop() {
     setTime();
     
   }
-  else if (dataNumber == 200){
+  if (dataNumber == 200){
     stopAlarm();
     
   }
-  else if (dataNumber == 300){
+  if (dataNumber == 300){
     snoozeAlarm();
     
   }
-  else if (dataNumber == 400){
+  if (dataNumber == 400){
     SerialBT.println(rtc.getDateTime());
     
   }
-  else if (dataNumber == 500){
+  if (dataNumber == 500){
     setAlarm();
     
   }
-  else if (dataNumber == 600){
+  if (dataNumber == 600){
     viewAlarm();
     
   }
-  else if (dataNumber == 700){
+  if (dataNumber == 700){
     clearAlarm();
     
   }
-  else{
-    SerialBT.println("Error");
-    
+  if (dataNumber == 999){
+    for (int i = 0; i<3; i++){
+      digitalWrite(motor1,HIGH);
+      delay(3000);
+      digitalWrite(motor1,LOW);
+      delay(3000);
+      digitalWrite(motor2,HIGH);
+      delay(3000);
+      digitalWrite(motor2,LOW);
+      delay(3000);
+    }
+  
   }
   if ((rtc.getHour() == EEPROM.read(1)) && (rtc.getMinute() == EEPROM.read(2))){
     startVibration();
@@ -131,6 +140,7 @@ void setTime() {
   SerialBT.println("Input current Minute");
   int setMin = SerialBT.parseInt();
   rtc.setTime(0, setMin, setHour, day, month, year);
+  return;
 
 }
 
@@ -138,12 +148,16 @@ void stopAlarm() {
   stopVibration();
   timeSinceSnooze = 0;
   snooze = false;
+  SerialBT.println("Alarm Stopped")
+  return;
 }
 
 void snoozeAlarm(){
   stopVibration();
   timeSinceSnooze = millis();
   snooze = true;
+  SerialBT.println("Alarm Snoozed")
+  return;
 }
 
 void setAlarm(){
@@ -156,18 +170,22 @@ void setAlarm(){
   SerialBT.println("Input Snooze duration (0 for no snooze) ");
   int snoozeDuration = SerialBT.parseInt();
   EEPROM.write(3, snoozeDuration);
+  SerialBT.println("Alarm Set")
+  return;
 }
 
 void startVibration(){
   digitalWrite(motor1, HIGH);
   digitalWrite(motor2, HIGH);
   timeSinceSnooze = 0;
+  return;
 }
 
 void stopVibration(){
   digitalWrite(motor1, LOW);
   digitalWrite(motor2, LOW);
   timeSinceSnooze = 0;
+  return;
 }
 
 void viewAlarm(){
@@ -178,7 +196,7 @@ void viewAlarm(){
   SerialBT.print("Snooze interval");
   SerialBT.print(EEPROM.read(3));
   SerialBT.println("min");
-
+  return;
 }
 
 void clearAlarm(){
@@ -186,4 +204,5 @@ void clearAlarm(){
   EEPROM.write(2, 0);
   EEPROM.write(3, 0);
   SerialBT.println("Alarm Cleared");
+  return;
 }
